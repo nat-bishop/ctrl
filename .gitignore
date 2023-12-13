@@ -1,2 +1,4 @@
 FileControl.egg-info/
 venv/
+
+*.xml
