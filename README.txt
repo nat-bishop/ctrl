@@ -11,8 +11,8 @@ HYTHON_PATH = "C:\Program Files\Side Effects Software\Houdini 20.0.506\bin\hytho
 ./.venv\scripts\activate
 pip install --editable .
 
-Asset directory structure (in projects) - folder name will be the same
-kitchen_set.usd/
+Asset directory structure (in project) the file with same name as directory is the entry point for displaying
+kitchen_set/
     kitchen_set.usd
     assets/
 

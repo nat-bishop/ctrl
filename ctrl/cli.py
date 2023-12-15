@@ -30,12 +30,10 @@ def search():
               help='max number of results')
 @click.option('--gui/--no-gui', default=True,
               help='display project with gui')
-@click.option('--usd-view-type', '-u', type=click.Choice(['view', 'record']), default='record',
-              help='display usd file with usdview or usdrecord')
-def search_project(project_name, amount, gui, usd_view_type):
+def search_project(project_name, amount, gui):
     """Search for PROJECT_NAME, or find similar."""
     from ctrl.search.search_project_implementation import search
-    search(project_name, amount, gui, usd_view_type)
+    search(project_name, amount, gui)
 
 
 @cli.group()

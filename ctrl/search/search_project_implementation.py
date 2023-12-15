@@ -6,16 +6,13 @@ import ctrl.utils.helpers as helpers
 import ctrl.display.display as display
 
 
-def search(name: str, amount: int, gui_enabled: bool, usd_view_type: str) -> None:
+def search(name: str, amount: int, gui_enabled: bool) -> None:
     proj_path = helpers.proj_abs_path(name)
     if proj_path.exists():
         click.echo("project found")
         helpers.print_project(proj_path)
         if gui_enabled:
-            outputs = helpers.get_latest_files(proj_path / 'outputs')
-            for output in outputs.values():
-                display.display_file(output)
-            #display.display_files(outputs)
+            display.display_project_output(proj_path)
         sys.exit()
     else:
         click.echo("project not found")
@@ -31,5 +28,7 @@ def search(name: str, amount: int, gui_enabled: bool, usd_view_type: str) -> Non
         result = click.prompt("enter number", type=int)
         project, _ = similar_list[result]
         proj_path = helpers.proj_abs_path(project)
+        if gui_enabled:
+            display.display_project_output(proj_path)
         click.echo("")
         helpers.print_project(proj_path)
