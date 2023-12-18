@@ -11,7 +11,8 @@ setup(
         'directory_tree==0.0.4',
         'dirsync==2.2.5',
         'python-vlc==3.0.20123',
-        'opencv-python==4.8.1.78'
+        'opencv-python==4.8.1.78',
+        'psycopg2==2.9.9'
     ],
     entry_points={
         'console_scripts': [

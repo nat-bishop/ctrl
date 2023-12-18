@@ -1,7 +1,6 @@
 from pathlib import Path
 import ctrl.config as config
 import ctrl.utils.helpers as helpers
-import ctrl.utils.constants as constants
 import subprocess
 import cv2
 import click
@@ -23,7 +22,7 @@ def display_project_output(proj_path: Path) -> None:
         if file.suffix in video_formats:
             display_video(file)
         elif file.suffix in image_formats:
-            display_image()
+            display_image(file)
         elif file.suffix == '.usd':
             display_usd(file)
         else:
@@ -36,6 +35,7 @@ def display_image(path: Path) -> None:
     if image is None:
         print(f"Error: Could not read file '{path}'")
         return
+    click.echo(f"displaying image '{path.name}'")
     cv2.imshow("Image", image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
@@ -43,6 +43,7 @@ def display_image(path: Path) -> None:
 
 def display_video(path: Path) -> None:
     cap = cv2.VideoCapture(str(path))
+    click.echo(f"displaying video '{path.name}', press q to exit")
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -53,7 +54,9 @@ def display_video(path: Path) -> None:
     cap.release()
     cv2.destroyAllWindows()
 
+
 def display_usd(usd_path: Path) -> None:
     """display USD_PATH with usdview"""
     usdview_path = Path(config.USD_ROOT_PATH, 'scripts', 'usdview.bat')
+    click.echo(f"displaying usd file: {usd_path.name} with 'usdview'")
     subprocess.run([str(usdview_path), str(usd_path), '--defaultsettings'])
