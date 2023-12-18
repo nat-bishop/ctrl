@@ -21,7 +21,7 @@ def print_project(proj_path: Path, show_tree: bool = False) -> None:
 
 
 def proj_abs_path(name: str) -> Path:
-    return Path(config.ART_ROOT_PATH, 'projects', name)
+    return Path(config.ART_ROOT_PATH, 'projects', camel_to_title(name))
 
 
 def get_tools(proj_path: Path) -> list[Path]:
@@ -40,19 +40,24 @@ def get_outputs(proj_path: Path) -> list[Path]:
     return get_subdirs(proj_path / 'outputs')
 
 
-def camel_to_sent(string: str) -> str:
-    return re.sub('([A-Z])', r' \1', string)
+def camel_to_title(string: str) -> str:
+    return re.sub('([A-Z])', r' \1', string).title()
+
+
+def sent_to_camel(string: str) -> str:
+    temp = string.split(" ")
+    return temp[0] + ''.join(ele.title() for ele in temp[1:])
 
 
 def find_similarity(sentence: str, list_of_sentences: list[str]) -> list[tuple[str, float]]:
     import spacy
     # uses nlp returns list of comparisons
     nlp = spacy.load("en_core_web_lg")
-    sentence = camel_to_sent(sentence).lower()
+    sentence = camel_to_title(sentence).lower()
     sentence = re.sub('[0-9]', '', sentence)
     similarities = []
     for comparator in list_of_sentences:
-        comparator_clean = camel_to_sent(comparator).lower()
+        comparator_clean = camel_to_title(comparator).lower()
         comparator_clean = re.sub('[0-9]', '', comparator_clean)
         similarity = nlp(sentence).similarity(nlp(comparator_clean))
         similarities.append((comparator, similarity))
@@ -68,13 +73,13 @@ def extract_filename(name: str) -> tuple[str, str, str, datetime, str]:
     file_info, extension = name.split('.')
     project_name, file_name, file_type, yymmdd, hhmm = file_info.split('_')
     time = datetime(int('20' + yymmdd[0:2]), int(yymmdd[2:4]), int(yymmdd[4:6]), int(hhmm[0:2]), int(hhmm[2:4]))
-    return project_name, file_name, file_type, time, extension
+    return camel_to_title(project_name), file_name, file_type, time, extension
 
 
 def construct_filename(project_name: str, file_name: str, file_type: str, time: datetime, extension: str) -> str:
     """Constructs filename"""
     string_time = time.strftime("%y%m%d_%H%M")
-    return f"{project_name}_{file_name}_{file_type}_{string_time}.{extension}"
+    return f"{sent_to_camel(project_name)}_{file_name}_{file_type}_{string_time}.{extension}"
 
 
 def get_latest_files(path: Path) -> dict[str, Path]:
