@@ -10,7 +10,7 @@ import ctrl.utils.helpers as helpers
 
 
 def new_file(name: str, tool: str, file_name: str, type: str) -> None:
-    proj_path = helpers.proj_abs_path(name)
+    proj_path = helpers.get_proj_path(name)
 
     if tool not in helpers.get_tools(proj_path):
         click.echo(f"{tool} not found in project {name}")

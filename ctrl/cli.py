@@ -25,7 +25,7 @@ def search():
 
 
 @search.command(name='project')
-@click.argument('project_name', shell_complete=autocomplete.projects_autocomplete, required=True, type=str)
+@click.argument('project_name', shell_complete=autocomplete.projects, required=True, type=str)
 @click.option('--amount', '-a', default=10, required=False, type=int,
               help='max number of results')
 @click.option('--gui/--no-gui', default=True,
@@ -45,14 +45,17 @@ def new():
 @new.command(name='project')
 @click.argument('project_name', required=True, type=str)
 @click.argument("tools", nargs=-1, type=click.Choice(constants.TOOLS))
-def new_project(name, tools):
+@click.option('--creators', '-c', required=False, shell_complete=autocomplete.project_users, multiple=True)
+def new_project(project_name, tools, creators):
     """Create new project PROJECT_NAME with TOOLS."""
     from ctrl.new.new_project_implementation import new
-    new(name, tools)
+    if not creators:
+        creators = []
+    new(project_name, tools, creators)
 
 
 @new.command(name='file')
-@click.argument('project_name', shell_complete=autocomplete.projects_autocomplete, required=True, type=str)
+@click.argument('project_name', shell_complete=autocomplete.projects, required=True, type=str)
 @click.argument('tool', type=click.Choice(constants.TOOLS), required=True)
 @click.argument('file_name', required=True)
 @click.argument('type', required=True, type=click.Choice(constants.FILE_TYPE))
@@ -68,9 +71,9 @@ def new_file(name, tool, file_name, type):
 
 
 @cli.command()
-@click.argument('project_name', shell_complete=autocomplete.projects_autocomplete, required=True, type=str)
-@click.argument('tool', shell_complete=autocomplete.tools_autocomplete, required=True)
-@click.argument('file', shell_complete=autocomplete.project_files_autocomplete, required=True)
+@click.argument('project_name', shell_complete=autocomplete.projects, required=True, type=str)
+@click.argument('tool', shell_complete=autocomplete.tools, required=True)
+@click.argument('file', shell_complete=autocomplete.project_files, required=True)
 def open(project_name, tool, file):
     """Opens FILE for TOOL in PROJECT_NAME"""
     from ctrl.open.open_implementation import open
@@ -87,3 +90,15 @@ def save(tool, name, type):
     """save current open session for TOOL"""
     from ctrl.save.save_implementation import save
     save(tool, name, type)
+
+@cli.group()
+def delete():
+    """Tool for deleting assets, users and projects"""
+    pass
+
+@delete.command(name='user')
+@click.argument('name', shell_complete=autocomplete.user)
+def delete_user(name):
+    """delete user NAME"""
+    from ctrl.delete.delete_user_implementation import delete_user
+    delete_user(name)

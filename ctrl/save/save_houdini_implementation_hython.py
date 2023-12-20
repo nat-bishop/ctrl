@@ -24,7 +24,7 @@ def save(args):
         file_type = args.type
 
     final_name = helpers.construct_filename(project_name, file_name, file_type, datetime.now(), extension)
-    save_path = helpers.proj_abs_path(project_name) / 'houdini' / 'projectFiles' / final_name
+    save_path = helpers.get_proj_path(project_name) / 'houdini' / 'projectFiles' / final_name
     hou.hipFile.save(str(save_path))
     print(f"saved file to: {hou.hipFile.path()}")
     hou.releaseLicense()

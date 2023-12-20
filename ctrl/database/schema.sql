@@ -1,6 +1,6 @@
 CREATE TABLE Assets (
     AssetID SERIAL PRIMARY KEY,
-    PayloadPath VARCHAR(255) NOT NULL,
+    PayloadPath VARCHAR(255) NOT NULL UNIQUE,
     ThumbnailPath VARCHAR(255),
     ViewingPath VARCHAR(255),
     Type VARCHAR(50) NOT NULL,
@@ -13,8 +13,8 @@ CREATE TABLE Assets (
 
 CREATE TABLE Projects (
     ProjectID SERIAL PRIMARY KEY,
-    PayloadPath VARCHAR(255) NOT NULL,
-    Title VARCHAR(100) NOT NULL,
+    PayloadPath VARCHAR(255) NOT NULL UNIQUE,
+    Title VARCHAR(100) NOT NULL UNIQUE,
     Description TEXT,
     DateCreated DATE
 );

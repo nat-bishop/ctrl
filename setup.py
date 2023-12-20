@@ -8,9 +8,7 @@ setup(
         'Click==8.1.7',
         'Spacy==3.7.2',
         'en_core_web_lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.1/en_core_web_lg-3.7.1-py3-none-any.whl',
-        'directory_tree==0.0.4',
         'dirsync==2.2.5',
-        'python-vlc==3.0.20123',
         'opencv-python==4.8.1.78',
         'psycopg2==2.9.9'
     ],

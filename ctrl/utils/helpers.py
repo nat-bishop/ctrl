@@ -5,23 +5,39 @@ from pathlib import Path
 
 import ctrl.utils.constants as constants
 import ctrl.config as config
+import ctrl.database.utils as db
 
 
-def print_project(proj_path: Path, show_tree: bool = False) -> None:
+def print_project(proj_path: Path) -> None:
     """prints info about project"""
-    from directory_tree import display_tree
-    click.echo(f"name: {proj_path.name}")
-    tool_names = [x.name for x in get_tools(proj_path)]
-    click.echo(f"tools: {', '.join(tool_names)}")
-    if show_tree:
-        click.echo("dir tree:")
-        click.echo("")
-        tree_string = display_tree(dir_path=proj_path, string_rep=True, header=True, show_hidden=True)
-        click.echo(f"{tree_string}")
+    query = ("SELECT u.Name, p.Title, p.Description, p.DateCreated "
+             "FROM Users u "
+             "JOIN Project_Users pu ON u.UserID = pu.UserID "
+             "JOIN Projects p ON pu.ProjectID = p.ProjectID "
+             "WHERE p.PayloadPath = %s;")
+    res = db.execute_query(query, (str(proj_path),))
+    users = ", ".join([item[0] for item in res])
+    title = res[0][1]
+    desc = res[0][2]
+    date_created = res[0][3]
+    tool_names = ", ".join([x.name for x in get_tools(proj_path)])
+    click.echo(f"title: {title}")
+    click.echo(f"path: {proj_path}")
+    click.echo(f"tools: {tool_names}")
+    click.echo(f"creators: {users}")
+    click.echo(f"created: {date_created}")
+    click.echo(f"desc: {desc}")
 
 
-def proj_abs_path(name: str) -> Path:
-    return Path(config.ART_ROOT_PATH, 'projects', camel_to_title(name))
+def get_proj_path(name: str) -> Path | None:
+    res = db.execute_query("SELECT PayloadPath FROM Projects WHERE Title = %s", (name,))
+    if len(res) > 1:
+        click.echo(f"error: multiple projects with name: {name} found")
+        return None
+    elif not res:
+        return None
+    else:
+        return Path(res[0][0])
 
 
 def get_tools(proj_path: Path) -> list[Path]:

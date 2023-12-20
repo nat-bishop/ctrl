@@ -1,13 +1,13 @@
-import os
-
 import click
 import sys
 import ctrl.utils.helpers as helpers
 import ctrl.display.display as display
 
+import ctrl.database.utils as db
+
 
 def search(name: str, amount: int, gui_enabled: bool) -> None:
-    proj_path = helpers.proj_abs_path(name)
+    proj_path = helpers.get_proj_path(name)
     if proj_path.exists():
         click.echo("project found")
         helpers.print_project(proj_path)
@@ -27,7 +27,7 @@ def search(name: str, amount: int, gui_enabled: bool) -> None:
         click.echo("more info?")
         result = click.prompt("enter number", type=int)
         project, _ = similar_list[result]
-        proj_path = helpers.proj_abs_path(project)
+        proj_path = helpers.get_proj_path(project)
         if gui_enabled:
             display.display_project_output(proj_path)
         click.echo("")
