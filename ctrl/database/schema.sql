@@ -13,7 +13,7 @@ CREATE TABLE Assets (
 
 CREATE TABLE Projects (
     ProjectID SERIAL PRIMARY KEY,
-    PayloadPath VARCHAR(255) NOT NULL UNIQUE,
+    PayloadPath VARCHAR(255) PRIMARY KEY ,
     Title VARCHAR(100) NOT NULL UNIQUE,
     Description TEXT,
     DateCreated DATE

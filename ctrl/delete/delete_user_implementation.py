@@ -1,2 +1,5 @@
+import ctrl.database.utils
+
+
 def delete_user(name):
-    pass
+    res =
