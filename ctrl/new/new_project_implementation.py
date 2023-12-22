@@ -1,6 +1,7 @@
 import click
 import ctrl.utils.helpers as helpers
-import ctrl.database.utils as db
+import ctrl.database.utils as utils
+import ctrl.database.query as query
 from datetime import datetime
 from pathlib import Path
 import ctrl.config as config
@@ -28,48 +29,40 @@ def new(name: str, tools: list[str], creators: list[str]) -> None:
 
 def _add_project_db(creators: list[str], proj_path: Path, name: str, desc: str) -> None:
     user_ids = _create_users_db(creators)
-    project_query = ("INSERT INTO Projects (PayloadPath, Title, Description, DateCreated) "
-                     "VALUES (%s, %s, %s, %s) "
-                     "RETURNING ProjectID;")
-    params = (str(proj_path), name, desc, datetime.now())
-    project_id = db.execute_query(project_query, params, True)[0][0]
-    user_query = ("INSERT INTO Project_Users "
-                  "VALUES (%s, %s)")
+    data = {'PayloadPath': str(proj_path),
+            'Title': name,
+            'Description': desc,
+            'DateCreated': datetime.now()}
+
+    project_id = utils.perform_db_op(query.insert_record, 'Projects', data, 'ProjectID')
+    data['ProjectID'] = project_id
     for user in user_ids:
-        params = (project_id, user)
-        db.execute_query(user_query, params)
+        data['UserID'] = user
+        utils.perform_db_op(query.insert_record, 'Project_Users', data)
 
     click.echo("added project to database")
 
 
 def _create_users_db(users: list[str]) -> list[int]:
     """Creates user in db if they dont exist, returns userids of users"""
-    user_query = "SELECT * FROM Users;"
-    res = db.execute_query(user_query)
-    user_names = [item[1].lower() for item in res]
-    user_ids = []
+    id_list = []
     for user in users:
-        if user.lower() not in user_names:
+        user_id = utils.perform_db_op(query.get_record, 'Users', 'Name', user, 'UserID')
+        if user_id:
+            id_list.append(user_id)
+        else:
             click.confirm(f"could not find user: {user}, create new user in database?")
             bio = click.prompt("bio for new user: ", type=str)
-            click.echo("")
-            add_user_query = ("INSERT INTO Users (Name, Bio) "
-                              "VALUES (%s, %s) "
-                              "RETURNING UserId")
-            params = (user, bio)
-            user_id = db.execute_query(add_user_query, params, True)[0][0]
-            user_ids.append(user_id)
+            data = {'Name': user,
+                    'Bio': bio}
+            new_id = utils.perform_db_op(query.insert_record, 'User', data, 'UserID')
+            id_list.append(new_id)
             click.echo(f"added user: {user} to database")
-        else:
-            find_user_query = ("SELECT UserID "
-                               "FROM Users "
-                               "WHERE Name = %s")
-            user_ids.append(db.execute_query(find_user_query, (user,), True)[0][0])
 
-    return user_ids
+    return id_list
 
 
-def _add_project_dirs(proj_path, tools):
+def _add_project_dirs(proj_path: Path, tools: str) -> None:
     for tool in tools:
         (proj_path / tool).mkdir(parents=True)
         (proj_path / tool / 'projectFiles').mkdir(parents=True)
