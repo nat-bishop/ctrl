@@ -45,13 +45,22 @@ def new():
 @new.command(name='project')
 @click.argument('project_name', required=True, type=str)
 @click.argument("tools", nargs=-1, type=click.Choice(constants.TOOLS))
-@click.option('--creators', '-c', required=False, shell_complete=autocomplete.project_users, multiple=True)
+@click.option('--creators', '-c', required=False, shell_complete=autocomplete.users, multiple=True)
 def new_project(project_name, tools, creators):
-    """Create new project PROJECT_NAME with TOOLS."""
+    """Create new project PROJECT_NAME with TOOLS and CREATORS."""
     from ctrl.new.new_project_implementation import new
     if not creators:
         creators = []
     new(project_name, tools, creators)
+
+
+@new.command(name='user')
+@click.argument('user_name', required=True, type=str)
+@click.option('--bio', '-b', required=False, type=str)
+def new_user(user_name, bio):
+    """Create new user with USER_NAME and BIO"""
+    from ctrl.new.new_user_implementation import new_user
+    new_user(user_name, bio)
 
 
 @new.command(name='file')
@@ -91,14 +100,24 @@ def save(tool, name, type):
     from ctrl.save.save_implementation import save
     save(tool, name, type)
 
+
 @cli.group()
 def delete():
     """Tool for deleting assets, users and projects"""
     pass
 
+
 @delete.command(name='user')
-@click.argument('name', shell_complete=autocomplete.user)
+@click.argument('name', shell_complete=autocomplete.users)
 def delete_user(name):
+    """delete user NAME"""
+    from ctrl.delete.delete_user_implementation import delete_user
+    delete_user(name)
+
+
+@delete.command(name='project')
+@click.argument('project', shell_complete=autocomplete.projects)
+def delete_project(name):
     """delete user NAME"""
     from ctrl.delete.delete_user_implementation import delete_user
     delete_user(name)

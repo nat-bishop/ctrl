@@ -5,10 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e042320d-798c-4175-909a-953eb374b05e" name="Changes" comment="commit">
-      <change afterPath="$PROJECT_DIR$/ctrl/database/query.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ctrl/new/new_user_implementation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ctrl/database/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/ctrl/database/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctrl/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/ctrl/cli.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctrl/database/query.py" beforeDir="false" afterPath="$PROJECT_DIR$/ctrl/database/query.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctrl/delete/delete_user_implementation.py" beforeDir="false" afterPath="$PROJECT_DIR$/ctrl/delete/delete_user_implementation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ctrl/new/new_project_implementation.py" beforeDir="false" afterPath="$PROJECT_DIR$/ctrl/new/new_project_implementation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctrl/utils/autocomplete.py" beforeDir="false" afterPath="$PROJECT_DIR$/ctrl/utils/autocomplete.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ctrl/utils/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/ctrl/utils/helpers.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -165,7 +169,7 @@
       <workItem from="1702409168823" duration="1000" />
       <workItem from="1702409662052" duration="19200000" />
       <workItem from="1702487583225" duration="666000" />
-      <workItem from="1702502688873" duration="86795000" />
+      <workItem from="1702502688873" duration="94969000" />
     </task>
     <task id="LOCAL-00001" summary="Initial Commit">
       <option name="closed" value="true" />
@@ -223,7 +227,15 @@
       <option name="project" value="LOCAL" />
       <updated>1703145791990</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="commit">
+      <option name="closed" value="true" />
+      <created>1703220093614</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1703220093614</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

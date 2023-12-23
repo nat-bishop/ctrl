@@ -28,7 +28,9 @@ def new(name: str, tools: list[str], creators: list[str]) -> None:
 
 
 def _add_project_db(creators: list[str], proj_path: Path, name: str, desc: str) -> None:
-    user_ids = _create_users_db(creators)
+    user_ids = []
+    for user in creators:
+        user_ids.append(utils.perform_db_op(query.get_record, 'Name', 'Users', 'UserID'), user)
     data = {'PayloadPath': str(proj_path),
             'Title': name,
             'Description': desc,
@@ -43,26 +45,7 @@ def _add_project_db(creators: list[str], proj_path: Path, name: str, desc: str) 
     click.echo("added project to database")
 
 
-def _create_users_db(users: list[str]) -> list[int]:
-    """Creates user in db if they dont exist, returns userids of users"""
-    id_list = []
-    for user in users:
-        user_id = utils.perform_db_op(query.get_record, 'Users', 'Name', user, 'UserID')
-        if user_id:
-            id_list.append(user_id)
-        else:
-            click.confirm(f"could not find user: {user}, create new user in database?")
-            bio = click.prompt("bio for new user: ", type=str)
-            data = {'Name': user,
-                    'Bio': bio}
-            new_id = utils.perform_db_op(query.insert_record, 'User', data, 'UserID')
-            id_list.append(new_id)
-            click.echo(f"added user: {user} to database")
-
-    return id_list
-
-
-def _add_project_dirs(proj_path: Path, tools: str) -> None:
+def _add_project_dirs(proj_path: Path, tools: list[str,...]) -> None:
     for tool in tools:
         (proj_path / tool).mkdir(parents=True)
         (proj_path / tool / 'projectFiles').mkdir(parents=True)

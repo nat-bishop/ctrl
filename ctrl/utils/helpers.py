@@ -4,8 +4,8 @@ from datetime import datetime
 from pathlib import Path
 
 import ctrl.utils.constants as constants
-import ctrl.config as config
-import ctrl.database.utils as db
+import ctrl.database.utils as utils
+import ctrl.database.query as query
 
 
 def print_project(proj_path: Path) -> None:
@@ -30,14 +30,7 @@ def print_project(proj_path: Path) -> None:
 
 
 def get_proj_path(name: str) -> Path | None:
-    res = db.execute_query("SELECT PayloadPath FROM Projects WHERE Title = %s", (name,))
-    if len(res) > 1:
-        click.echo(f"error: multiple projects with name: {name} found")
-        return None
-    elif not res:
-        return None
-    else:
-        return Path(res[0][0])
+    return utils.perform_db_op(query.get_record, 'PayloadPath', 'Projects', 'Title', name)
 
 
 def get_tools(proj_path: Path) -> list[Path]:

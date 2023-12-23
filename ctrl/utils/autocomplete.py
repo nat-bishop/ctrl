@@ -1,12 +1,10 @@
-from pathlib import Path
 
 
 def projects(ctx, param, incomplete):
-    import ctrl.database.utils as db
-    project_query = "SELECT Title FROM Projects WHERE LOWER(Title) LIKE %s"
-    project_inc = f"{incomplete.lower()}%"
-    res = db.execute_query(project_query, (project_inc,))
-    return ['"'+item[0]+'"' for item in res]
+    import ctrl.database.utils as utils
+    import ctrl.database.query as query
+    res = utils.perform_db_op(query.get_records_partial, 'Title', 'Projects', 'Title', incomplete)
+    return ['"'+item+'"' for item in res]
 
 
 def tools(ctx, param, incomplete):
@@ -24,12 +22,8 @@ def project_files(ctx, param, incomplete):
     return [x for x in newest_files if x.lower().startswith(incomplete.lower())]
 
 
-def project_users(ctx, param, incomplete):
-    import ctrl.database.utils as db
-    query = ("SELECT u.Name "
-             "FROM Users u "
-             "WHERE LOWER(u.Name) LIKE %s")
-    user_incomplete = f"{incomplete.lower()}%"
-
-    res = db.execute_query(query, (user_incomplete, ))
-    return ['"'+item[0]+'"' for item in res]
+def users(ctx, param, incomplete):
+    import ctrl.database.utils as utils
+    import ctrl.database.query as query
+    res = utils.perform_db_op(query.get_records_partial, 'Name', 'Users', 'Name', incomplete)
+    return ['"'+item+'"' for item in res]

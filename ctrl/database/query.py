@@ -1,17 +1,16 @@
-import psycopg2
 from typing import Optional, Any
 
 
-def get_record(cursor: psycopg2.cursor,
+def get_record(cursor,
+               select_col_name: str,
                table_name: str,
-               src_col_name: str,
-               src_value: Any,
-               target_col_name: str) -> Optional[Any]:
-    query = (f"SELECT {target_col_name}"
-             f"FROM {table_name}"
-             f"WHERE {src_col_name} = %s")
+               where_col_name: str,
+               where_col_value: Any) -> Optional[Any]:
+    query = (f"SELECT {select_col_name} "
+             f"FROM {table_name} "
+             f"WHERE {where_col_name} = %s")
 
-    cursor.execute(query, (src_value, ))
+    cursor.execute(query, (where_col_value,))
     return_value = cursor.fetchall()
 
     if len(return_value) > 1:
@@ -23,7 +22,22 @@ def get_record(cursor: psycopg2.cursor,
         return return_value[0][0]
 
 
-def insert_record(cursor: psycopg2.cursor,
+def get_records_partial(cursor,
+                       select_col_name: str,
+                       table_name: str,
+                       where_col_name: str,
+                       partial_value: str) -> list[Any, ...]:
+    """Retrieves all records that match partial_name. Uses LOWER for now"""
+    query = (f"SELECT {select_col_name} "
+             f"FROM {table_name} "
+             f"WHERE LOWER({where_col_name}) LIKE %s")
+    partial_lower = f"{partial_value.lower()}%"
+    cursor.execute(query, (partial_lower, ))
+    res = cursor.fetchall()
+    return [item[0] for item in res]
+
+
+def insert_record(cursor,
                   table_name: str,
                   data: dict[str, Any],
                   return_col: Optional[str] = None) -> Optional[Any]:
@@ -45,7 +59,7 @@ def insert_record(cursor: psycopg2.cursor,
         return cursor.fetchone()[0]
 
 
-def delete_record(cursor: psycopg2.cursor,
+def delete_record(cursor,
                   table_name: str,
                   col_name: str,
                   col_value: str) -> None:
