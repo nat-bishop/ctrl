@@ -27,3 +27,13 @@ def users(ctx, param, incomplete):
     import ctrl.database.query as query
     res = utils.perform_db_op(query.get_records_partial, 'Name', 'Users', 'Name', incomplete)
     return ['"'+item+'"' for item in res]
+
+
+def asset_viewing_path(ctx, param, incomplete):
+    target_path = ctx.params.get('target_path')
+    return [target_path]
+    return ['"'+str(path)+'"' for path in target_path.glob(f'**/*.usd')]
+
+
+def asset_tags(ctx, param, incomplete):
+    return ['dsfdfsdf','sdfsdf']

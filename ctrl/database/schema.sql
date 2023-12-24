@@ -1,14 +1,14 @@
 CREATE TABLE Assets (
     AssetID SERIAL PRIMARY KEY,
-    PayloadPath VARCHAR(255) NOT NULL UNIQUE,
-    ThumbnailPath VARCHAR(255),
+    AssetPath VARCHAR(255) NOT NULL UNIQUE,
+    ThumbnailPath VARCHAR(255) NULL,
     ViewingPath VARCHAR(255),
     Type VARCHAR(50) NOT NULL,
     Title VARCHAR(100) NOT NULL,
-    Description TEXT,
+    Description TEXT NOT NULL,
     Mediator VARCHAR(100),
     DateCreated DATE,
-    Rights TEXT
+    Rights TEXT NOT NULL
 );
 
 CREATE TABLE Projects (

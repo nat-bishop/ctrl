@@ -2,6 +2,7 @@ from pathlib import Path
 import click
 import ctrl.utils.autocomplete as autocomplete
 import ctrl.utils.constants as constants
+from datetime import date
 
 
 @click.group()
@@ -45,18 +46,20 @@ def new():
 @new.command(name='project')
 @click.argument('project_name', required=True, type=str)
 @click.argument("tools", nargs=-1, type=click.Choice(constants.TOOLS))
-@click.option('--creators', '-c', required=False, shell_complete=autocomplete.users, multiple=True)
-def new_project(project_name, tools, creators):
-    """Create new project PROJECT_NAME with TOOLS and CREATORS."""
+@click.argument('description', type=str)
+@click.option('--creators', '-c', required=False, shell_complete=autocomplete.users, multiple=True,
+              help='authors of project')
+def new_project(project_name, tools, description, creators):
+    """Create new project PROJECT_NAME with TOOLS, DESCRIPTION and CREATORS."""
     from ctrl.new.new_project_implementation import new
     if not creators:
         creators = []
-    new(project_name, tools, creators)
+    new(project_name, tools, description, creators)
 
 
 @new.command(name='user')
 @click.argument('user_name', required=True, type=str)
-@click.option('--bio', '-b', required=False, type=str)
+@click.argument('bio', type=str)
 def new_user(user_name, bio):
     """Create new user with USER_NAME and BIO"""
     from ctrl.new.new_user_implementation import new_user
@@ -77,6 +80,25 @@ def new_file(name, tool, file_name, type):
     TYPE is the type of file (render, model, ect.)"""
     from ctrl.new.new_file_implementation import new_file
     new_file(name, tool, file_name, type)
+
+
+@new.command(name='asset')
+@click.argument('target_path', type=click.Path(exists=True, resolve_path=True, path_type=Path))
+@click.argument('name', type=str)
+@click.argument('type', type=click.Choice(constants.ASSET_TYPES))
+@click.argument('viewing_path', type=click.Path(exists=True, path_type=Path), shell_complete=autocomplete.asset_viewing_path)
+@click.argument('mediator', type=click.Choice(constants.SOFTWARES))
+@click.argument('rights', type=click.Choice(constants.RIGHTS))
+@click.argument('description', type=str)
+@click.option('--tags', '-t', multiple=True, shell_complete=autocomplete.asset_tags,
+              help='either pick from predefined list or create a new tag')
+@click.option('--creators', '-c', multiple=True, shell_complete=autocomplete.users,
+              help='creators of the asset')
+@click.option('--date-created', '-d', type=click.DateTime(formats=["%Y-%m-%d"]), default=str(date.today()))
+@click.option('--parent-name', '-p', shell_complete=autocomplete.projects,
+              help='name of parent asset if this asset is a part')
+def new_asset(target_path, name, type, viewing_path, mediator, rights, description, tags, creators, date_created, parent_name):
+    pass
 
 
 @cli.command()

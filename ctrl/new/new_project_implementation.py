@@ -2,18 +2,17 @@ import click
 import ctrl.utils.helpers as helpers
 import ctrl.database.utils as utils
 import ctrl.database.query as query
-from datetime import datetime
+from datetime import date
 from pathlib import Path
 import ctrl.config as config
 
 
-def new(name: str, tools: list[str], creators: list[str]) -> None:
+def new(name: str, tools: list[str], description: str, creators: list[str]) -> None:
     proj_path = helpers.get_proj_path(name)
     if proj_path:
         click.echo("project already exists")
         helpers.print_project(proj_path)
     else:
-        desc = click.prompt("description for new project")
         proj_path = Path(config.ART_ROOT_PATH, helpers.sent_to_camel(name))
         tools_str = ", ".join(tools)
         creators_str = ", ".join(creators)
@@ -21,20 +20,20 @@ def new(name: str, tools: list[str], creators: list[str]) -> None:
         click.echo(f"path: {proj_path}")
         click.echo(f"tools: {tools_str}")
         click.echo(f"creators: {creators_str}")
-        click.echo(f"desc: {desc}")
+        click.echo(f"desc: {description}")
         click.confirm("create project?", abort=True)
         _add_project_dirs(proj_path, tools)
-        _add_project_db(creators, proj_path, name, desc)
+        _add_project_db(creators, proj_path, name, description)
 
 
 def _add_project_db(creators: list[str], proj_path: Path, name: str, desc: str) -> None:
     user_ids = []
     for user in creators:
-        user_ids.append(utils.perform_db_op(query.get_record, 'Name', 'Users', 'UserID'), user)
+        user_ids.append(utils.perform_db_op(query.get_record, 'Name', 'Users', 'UserID', user))
     data = {'PayloadPath': str(proj_path),
             'Title': name,
             'Description': desc,
-            'DateCreated': datetime.now()}
+            'DateCreated': date.now()}
 
     project_id = utils.perform_db_op(query.insert_record, 'Projects', data, 'ProjectID')
     data['ProjectID'] = project_id
