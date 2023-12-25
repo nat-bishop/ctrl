@@ -1,3 +1,4 @@
+import click
 
 
 def projects(ctx, param, incomplete):
@@ -31,9 +32,13 @@ def users(ctx, param, incomplete):
 
 def asset_viewing_path(ctx, param, incomplete):
     target_path = ctx.params.get('target_path')
-    return [target_path]
-    return ['"'+str(path)+'"' for path in target_path.glob(f'**/*.usd')]
+    if target_path.is_file():
+        return ['.']
+    return [path.relative_to(target_path).as_posix() for path in target_path.glob(f'**/{incomplete}*')]
 
 
 def asset_tags(ctx, param, incomplete):
-    return ['dsfdfsdf','sdfsdf']
+    import ctrl.database.utils as utils
+    import ctrl.database.query as query
+    res = utils.perform_db_op(query.get_records_partial, 'Name', 'Tags', 'Name', incomplete)
+    return ['"'+item+'"' for item in res]
