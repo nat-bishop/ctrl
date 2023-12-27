@@ -9,7 +9,6 @@ def get_record(cursor,
     query = (f"SELECT {select_col_name} "
              f"FROM {table_name} "
              f"WHERE {where_col_name} = %s")
-
     cursor.execute(query, (where_col_value,))
     return_value = cursor.fetchall()
 
@@ -22,17 +21,25 @@ def get_record(cursor,
         return return_value[0][0]
 
 
+def get_all_records(cursor, table_name: str, where_col_name: Optional[str] = None, where_val: Optional[str] = None) -> Optional[Any]:
+    query = f"SELECT * FROM {table_name}"
+    if where_col_name and where_val:
+        query + f" WHERE"
+    cursor.execute(query)
+    return cursor.fetchall()
+
+
 def get_records_partial(cursor,
-                       select_col_name: str,
-                       table_name: str,
-                       where_col_name: str,
-                       partial_value: str) -> list[Any, ...]:
+                        select_col_name: str,
+                        table_name: str,
+                        where_col_name: str,
+                        partial_value: str) -> list[Any, ...]:
     """Retrieves all records that match partial_name. Uses LOWER for now"""
     query = (f"SELECT {select_col_name} "
              f"FROM {table_name} "
              f"WHERE LOWER({where_col_name}) LIKE %s")
     partial_lower = f"{partial_value.lower()}%"
-    cursor.execute(query, (partial_lower, ))
+    cursor.execute(query, (partial_lower,))
     res = cursor.fetchall()
     return [item[0] for item in res]
 
@@ -41,7 +48,6 @@ def insert_record(cursor,
                   table_name: str,
                   data: dict[str, Any],
                   return_col: Optional[str] = None) -> Optional[Any]:
-
     keys = data.keys()
     values = data.values()
     insert_columns = ', '.join(keys)
@@ -65,4 +71,4 @@ def delete_record(cursor,
                   col_value: str) -> None:
     query = (f"DELETE FROM {table_name} "
              f"WHERE {col_name} = %s")
-    cursor.execute(query, (col_value, ))
+    cursor.execute(query, (col_value,))

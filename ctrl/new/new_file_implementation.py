@@ -20,7 +20,7 @@ def new_file(name: str, tool: str, file_name: str, type: str) -> None:
     extension = constants.FILE_EXTENSIONS[tool]
     new_file = helpers.construct_filename(name, file_name, type, datetime.now(), extension)
     file_path = proj_path / tool / 'projectFiles' / new_file
-    template_path = Path(config.CTRL_ROOT_PATH, 'templates', f'{tool}_empty.{extension}')
+    template_path = Path(__file__).parents[2] / 'templates' / f'{tool}_empty.{extension}'
 
     if file_path.exists():
         click.echo(f"error, file already exists at {file_path}")

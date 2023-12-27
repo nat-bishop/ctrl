@@ -32,8 +32,6 @@ def users(ctx, param, incomplete):
 
 def asset_viewing_path(ctx, param, incomplete):
     target_path = ctx.params.get('target_path')
-    if target_path.is_file():
-        return ['.']
     return [path.relative_to(target_path).as_posix() for path in target_path.glob(f'**/{incomplete}*')]
 
 

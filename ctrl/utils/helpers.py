@@ -1,5 +1,6 @@
 import click
 import re
+import string
 from datetime import datetime
 from pathlib import Path
 
@@ -56,6 +57,14 @@ def camel_to_title(string: str) -> str:
 def sent_to_camel(string: str) -> str:
     temp = string.split(" ")
     return temp[0] + ''.join(ele.title() for ele in temp[1:])
+
+
+def standardize_word(word):
+    # Lowercase
+    word = word.lower()
+    # Remove punctuation
+    word = word.translate(str.maketrans('', '', string.punctuation))
+    return word
 
 
 def find_similarity(sentence: str, list_of_sentences: list[str]) -> list[tuple[str, float]]:
