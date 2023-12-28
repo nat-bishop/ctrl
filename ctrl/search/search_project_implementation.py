@@ -3,7 +3,6 @@ import sys
 import ctrl.utils.helpers as helpers
 import ctrl.display.display as display
 
-import ctrl.database.utils as db
 
 
 def search(name: str, amount: int, gui_enabled: bool) -> None:

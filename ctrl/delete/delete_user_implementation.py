@@ -1,7 +1,13 @@
-import ctrl.database.utils as utils
 import ctrl.database.query as query
+import click
 
 
-def delete_user(name):
-    utils.perform_db_op(query.delete_record, 'Users', 'Name', name)
-    #TODO delete project_users, asset_users
+def delete_user(cursor, name):
+    id = query.get_record(cursor,'UserID', 'Users', 'Name', name)
+    if not id:
+        click.echo(f"user: {name} not found")
+        exit(1)
+
+    query.delete_record(cursor, 'Asset_Users', 'UserID', id)
+    query.delete_record(cursor, 'Project_Users', 'UserID', id)
+    query.delete_record(cursor, 'Users', 'UserID', id)

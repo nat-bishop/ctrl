@@ -24,8 +24,10 @@ def get_record(cursor,
 def get_all_records(cursor, table_name: str, where_col_name: Optional[str] = None, where_val: Optional[str] = None) -> Optional[Any]:
     query = f"SELECT * FROM {table_name}"
     if where_col_name and where_val:
-        query + f" WHERE"
-    cursor.execute(query)
+        query += f" WHERE {where_col_name} = %s"
+        cursor.execute(query, (where_val,))
+    else:
+        cursor.execute(query)
     return cursor.fetchall()
 
 

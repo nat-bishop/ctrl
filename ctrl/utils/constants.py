@@ -5,7 +5,7 @@ FILE_EXTENSIONS ={
     'maya': 'ma',
     'zbrush': 'ztl'
 }
-RIGHTS = ['reference only', 'with modification', 'without modification']
+RIGHTS = ['reference_only', 'with_modification', 'without_modification']
 SOFTWARES = [
     'maya2024', 'houdini20'
 ]

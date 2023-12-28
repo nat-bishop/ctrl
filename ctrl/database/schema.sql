@@ -13,7 +13,7 @@ CREATE TABLE Assets (
 
 CREATE TABLE Projects (
     ProjectID SERIAL PRIMARY KEY,
-    PayloadPath VARCHAR(255) PRIMARY KEY ,
+    PayloadPath VARCHAR(255) UNIQUE ,
     Title VARCHAR(100) NOT NULL UNIQUE,
     Description TEXT,
     DateCreated DATE
@@ -53,9 +53,16 @@ CREATE TABLE Asset_Tags (
     FOREIGN KEY (TagID) REFERENCES Tags(TagID)
 );
 
+CREATE TABLE Project_Tags (
+    ProjectID INT,
+    TagID INT,
+    FOREIGN KEY (ProjectID) REFERENCES Projects(ProjectID),
+    FOREIGN KEY (TagID) REFERENCES Tags(TagID)
+);
+
 CREATE TABLE Users (
     UserID SERIAL PRIMARY KEY,
-    Name VARCHAR(100) NOT NULL,
+    Name VARCHAR(100) NOT NULL UNIQUE,
     Bio TEXT
 );
 

@@ -39,4 +39,4 @@ def asset_tags(ctx, param, incomplete):
     import ctrl.database.utils as utils
     import ctrl.database.query as query
     res = utils.perform_db_op(query.get_records_partial, 'Name', 'Tags', 'Name', incomplete)
-    return ['"'+item+'"' for item in res]
+    return res
