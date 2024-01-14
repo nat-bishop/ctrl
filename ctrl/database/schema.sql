@@ -4,7 +4,7 @@ CREATE TABLE Assets (
     ThumbnailPath VARCHAR(255) NULL,
     ViewingPath VARCHAR(255) NOT NULL,
     Type VARCHAR(50) NOT NULL,
-    Title VARCHAR(100) NOT NULL,
+    Title VARCHAR(100) NOT NULL UNIQUE,
     Description TEXT NOT NULL,
     Mediator VARCHAR(100),
     DateCreated DATE,

@@ -1,33 +1,35 @@
 import click
-import sys
-import ctrl.utils.helpers as helpers
 import ctrl.display.display as display
+import ctrl.database.query as query
+import ctrl.database.utils as utils
+import ctrl.utils.helpers as helpers
+from typing import Optional
+from datetime import date
 
 
+def search(name: Optional[str],
+           creators: Optional[list[str]],
+           tags: Optional[list[str]],
+           from_date: Optional[date],
+           to_date: Optional[date],
+           gui_enabled: bool) -> None:
 
-def search(name: str, amount: int, gui_enabled: bool) -> None:
-    proj_path = helpers.get_proj_path(name)
-    if proj_path.exists():
-        click.echo("project found")
-        helpers.print_project(proj_path)
+    projects = utils.perform_db_op(query.get_projects, name, from_date, to_date, tags, creators)
+    if not projects:
+        click.echo("no projects found that match search params")
+    elif len(projects) == 1:
+        name = projects[0]
+        click.echo("found project:")
+        helpers.print_project(name)
         if gui_enabled:
-            display.display_project_output(proj_path)
-        sys.exit()
+            display.display_project_output(name)
+            click.echo("")
     else:
-        click.echo("project not found")
+        click.echo("projects found:")
         click.echo("")
-        click.echo(f"similar projects to '{name}':")
-        subdirs = [x.name for x in helpers.get_subdirs(proj_path)]
-        similar_list = helpers.find_similarity(name, subdirs)
-        similar_list = similar_list[:amount]
-        for count, (name, similarNum) in enumerate(similar_list):
-            click.echo(f"{count}. {name} {int(100 * similarNum)}")
-        click.echo("")
-        click.echo("more info?")
-        result = click.prompt("enter number", type=int)
-        project, _ = similar_list[result]
-        proj_path = helpers.get_proj_path(project)
-        if gui_enabled:
-            display.display_project_output(proj_path)
-        click.echo("")
-        helpers.print_project(proj_path)
+        for proj_name in projects:
+            helpers.print_project(proj_name)
+            click.echo("")
+            if gui_enabled:
+                display.display_project_output(proj_name)
+                click.echo("")

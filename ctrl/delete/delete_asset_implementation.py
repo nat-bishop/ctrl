@@ -4,7 +4,7 @@ import ctrl.database.query as query
 
 
 def delete_asset(cursor, name):
-    asset_id = query.get_record(cursor,'AssetID', 'Assets', 'Title', name)
+    asset_id = query.get_asset_id(cursor, name)
     if not asset_id:
         click.echo(f"asset: {name} not found")
         exit(1)

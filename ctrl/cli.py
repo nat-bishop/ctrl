@@ -11,12 +11,22 @@ def cli():
 
 
 @cli.command()
-@click.argument('source_path', required=True, type=click.Path(exists=True, resolve_path=True, file_okay=False, path_type=Path))
-@click.argument('target_path', required=True, type=click.Path(file_okay=False, resolve_path=True,path_type=Path))
-def sync(source_path, target_path):
-    """Sync directory at SOURCE_PATH to directory at TARGET_PATH."""
+def backup():
+    """Backup art directory at config.ART_ROOT_PATH,
+    assets directory at config.ASSET_ROOT_PATH and database to config.BACKUP_PATH"""
+    from ctrl.backup.backup_implementation import backup
+    backup()
+
+
+@cli.command()
+@click.argument('sync_direction', type=click.Choice(['remote_to_source', 'source_to_remote']))
+def sync(sync_direction):
+    """Sync directory to SOURCE at config.ART_ROOT_PATH and config.ASSET_ROOT_PATH
+    or sync director to REMOTE at config.REMOTE_ART_ROOT_PATH and config.REMOTE_ASSET_ROOT_PATH
+
+    source files will not be changed, dest files will be deleted if not in source, updated if older than source"""
     from ctrl.sync.sync_implementation import sync
-    sync(source_path, target_path)
+    sync(sync_direction)
 
 
 @cli.group()
@@ -26,15 +36,73 @@ def search():
 
 
 @search.command(name='project')
-@click.argument('project_name', shell_complete=autocomplete.projects, required=True, type=str)
-@click.option('--amount', '-a', default=10, required=False, type=int,
-              help='max number of results')
+@click.option('--project-name', '-n', shell_complete=autocomplete.search_names_project, type=str,
+              help='will match all projects that start with this')
+@click.option('--creators', '-c', multiple=True, shell_complete=autocomplete.search_creators_project, type=str,
+              help='filter by creators')
+@click.option('--tags', '-t', multiple=True, shell_complete=autocomplete.search_tags_project,
+              help='filter by tags')
+@click.option('--from-date', '-f', type=click.DateTime(formats=["%Y-%m-%d"]),
+              help='only projects after this date')
+@click.option('--to-date', '-to', type=click.DateTime(formats=["%Y-%m-%d"]),
+              help='only projects before this date')
 @click.option('--gui/--no-gui', default=True,
               help='display project with gui')
-def search_project(project_name, amount, gui):
+def search_project(project_name, creators, tags, from_date, to_date, gui):
     """Search for PROJECT_NAME, or find similar."""
     from ctrl.search.search_project_implementation import search
-    search(project_name, amount, gui)
+    search(project_name, creators, tags, from_date, to_date, gui)
+
+
+@search.command(name='asset')
+@click.option('--asset-name', '-n', type=str, shell_complete=autocomplete.search_assets,
+              help='will match all assets that start with this')
+@click.option('--creators', '-c', multiple=True, shell_complete=autocomplete.users,
+              help='filter by creators')
+@click.option('--tags', '-t', multiple=True, type=str, shell_complete=autocomplete.tags,
+              help='filter by tags')
+@click.option('--asset-type', '-ty', type=click.Choice(constants.ASSET_TYPES),
+              help='filter by asset type (model, ect.)')
+@click.option('--rights', '-r', type=click.Choice(constants.RIGHTS),
+              help='filter by usage rights')
+@click.option('--software', '-s', type=click.Choice(constants.SOFTWARES),
+              help='software that the asset was created with')
+@click.option('--from-date', '-f', type=click.DateTime(formats=["%Y-%m-%d"]),
+              help='only assets after this date')
+@click.option('--to-date', '-to', type=click.DateTime(formats=["%Y-%m-%d"]),
+              help='only assets before this date')
+@click.option('--projects', '-p', multiple=True, shell_complete=autocomplete.projects,
+              help='filter by assets in use by project')
+@click.option('--gui/--no-gui', default=True,
+              help='display project with gui')
+def search_asset(asset_name, creators, tags, asset_type, rights, software, from_date, to_date, projects, gui):
+    from ctrl.search.search_asset_implementation import search_asset
+    search_asset(asset_name, creators, tags, asset_type, rights, software, from_date, to_date, projects, gui)
+
+
+@search.command(name='user')
+@click.argument('user_name', shell_complete=autocomplete.users)
+def search_user(user_name):
+    from ctrl.search.search_user_implementation import search_user
+    search_user(user_name)
+
+
+@cli.group()
+def edit():
+    pass
+
+
+@edit.command(name='project')
+@click.argument('project_name', required=True, shell_complete=autocomplete.projects)
+@click.option('--tags', '-tg', multiple=True, shell_complete=autocomplete.tags,
+              help='either pick from predefined list or create a new tag')
+@click.option('--description', '-d', type=str)
+@click.option('--creators', '-c', shell_complete=autocomplete.users, multiple=True,
+              help='authors of project')
+def edit_project(project_name, tags, description, creators):
+    """Edits project PROJECT_NAME to have updated values for TAGS, DESCRIPTION, CREATORS"""
+    from ctrl.edit.edit_project_implementation import edit
+    edit(project_name, tags, description, creators)
 
 
 @cli.group()
@@ -45,20 +113,16 @@ def new():
 
 @new.command(name='project')
 @click.argument('project_name', required=True, type=str)
-@click.argument("tools", nargs=-1, type=click.Choice(constants.TOOLS))
-@click.option('--tags', '-t', multiple=True, shell_complete=autocomplete.asset_tags,
+@click.option("--tools", "-t", multiple=True, type=click.Choice(constants.TOOLS))
+@click.option('--tags', '-tg', multiple=True, shell_complete=autocomplete.tags,
               help='either pick from predefined list or create a new tag')
 @click.option('--description', '-d', type=str, prompt=True)
 @click.option('--creators', '-c', required=False, shell_complete=autocomplete.users, multiple=True,
               help='authors of project')
-@click.confirmation_option(prompt='create new project?')
 def new_project(project_name, tools, tags, description, creators):
-    """Create new project PROJECT_NAME with TOOLS, DESCRIPTION and CREATORS."""
+    """Create new project PROJECT_NAME."""
     from ctrl.new.new_project_implementation import new
-    import ctrl.database.utils as utils
-    if not creators:
-        creators = []
-    utils.perform_db_op(new, project_name, tools, tags, description, creators)
+    new(project_name, tools or [], tags or [], description, creators or [])
 
 
 @new.command(name='user')
@@ -76,7 +140,7 @@ def new_user(user_name, bio):
 @click.argument('file_name', required=True)
 @click.argument('type', required=True, type=click.Choice(constants.FILE_TYPE))
 @click.confirmation_option(prompt='create new file?')
-def new_file(name, tool, file_name, type):
+def new_file(project_name, tool, file_name, type):
     """Creates new file with the following attributes:
 
     PROJECT_NAME is the name of the project
@@ -84,7 +148,7 @@ def new_file(name, tool, file_name, type):
     FILE_NAME is the name of the file
     TYPE is the type of file (render, model, ect.)"""
     from ctrl.new.new_file_implementation import new_file
-    new_file(name, tool, file_name, type)
+    new_file(project_name, tool, file_name, type)
 
 
 @new.command(name='asset')
@@ -98,15 +162,15 @@ def new_file(name, tool, file_name, type):
               help='software version used to create asset')
 @click.option('--description', '-d', type=str, prompt=True,
               help='description of asset, is prompted if not set in commandline')
-@click.option('--tags', '-t', multiple=True, shell_complete=autocomplete.asset_tags,
+@click.option('--tags', '-t', multiple=True, shell_complete=autocomplete.tags,
               help='either pick from predefined list or create a new tag')
 @click.option('--creators', '-c', multiple=True, shell_complete=autocomplete.users,
               help='creators of the asset')
-@click.option('--date-created', '-d', type=click.DateTime(formats=["%Y-%m-%d"]), default=str(date.today()),
+@click.option('--date-created', '-dc', type=click.DateTime(formats=["%Y-%m-%d"]), default=str(date.today()),
               help='date asset was created, defaults to today')
-@click.option('--parent-name', '-p', shell_complete=autocomplete.projects,
+@click.option('--parent-name', '-p', shell_complete=autocomplete.assets,
               help='name of parent asset if this asset is a part')
-@click.option('--original-name', '-o', shell_complete=autocomplete.projects,
+@click.option('--original-name', '-o', shell_complete=autocomplete.assets,
               help='name of original asset if this asset is a variation')
 def new_asset(target_path, name, type, viewing_path, mediator, rights, description, thumbnail_path, tags, creators, date_created, parent_name, original_name):
     """Creates new asset with following attributes:
@@ -155,16 +219,15 @@ def delete():
 @click.confirmation_option(prompt='delete user?')
 def delete_user(name):
     """delete user NAME"""
-    from ctrl.delete.delete_user_implementation import delete_user
+    import ctrl.delete.delete_user_implementation as delete
     from ctrl.database.utils import perform_db_op
-    perform_db_op(delete_user, name)
+    perform_db_op(delete.delete_user, name)
 
 
 @delete.command(name='project')
-@click.argument('project', shell_complete=autocomplete.projects)
-@click.confirmation_option(prompt='delete project?')
+@click.argument('name', shell_complete=autocomplete.projects)
 def delete_project(name):
     """delete user NAME"""
-    from ctrl.delete.delete_project_implementation import delete_project
+    import ctrl.delete.delete_project_implementation as delete
     from ctrl.database.utils import perform_db_op
-    perform_db_op(delete_project, name)
+    perform_db_op(delete.delete_project, name)

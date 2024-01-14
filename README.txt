@@ -1,6 +1,11 @@
 For click autocompletion:
 save "source /c/ctrl/scripts/.ctrl-complete.bash" to ~/.bashrc      (or whereever the root directory is)
 
+bashrc example:
+source /c/ctrl/scripts/.ctrl-complete.bash
+export PATH=$PATH:"/c/Program Files/PostgreSQL/16/bin"
+export PGPASSWORD="postgres"
+
 Add uiready.py to houdini startup script pythonX.Ylibs/uiready.py
 
 Used in houdini.py:

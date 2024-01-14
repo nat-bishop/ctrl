@@ -4,9 +4,9 @@ import click
 from datetime import datetime
 from pathlib import Path
 
-import ctrl.config as config
 import ctrl.utils.constants as constants
 import ctrl.utils.helpers as helpers
+import ctrl.new.new_utils as new_utils
 
 
 def new_file(name: str, tool: str, file_name: str, type: str) -> None:
@@ -18,7 +18,7 @@ def new_file(name: str, tool: str, file_name: str, type: str) -> None:
     if tool not in helpers.get_tools(proj_path):
         click.echo(f"{tool} not found in project {name}")
         click.echo("creating tool dirs")
-        (proj_path / tool).mkdir(parents=True)
+        new_utils.new_tool_dirs(proj_path, tool)
 
     extension = constants.FILE_EXTENSIONS[tool]
     new_file = helpers.construct_filename(name, file_name, type, datetime.now(), extension)
@@ -31,4 +31,4 @@ def new_file(name: str, tool: str, file_name: str, type: str) -> None:
 
     shutil.copy(template_path, file_path)
     click.echo(f"opening file: {new_file}")
-    click.launch(file_path)
+    click.launch(str(file_path))

@@ -6,12 +6,17 @@ import cv2
 import click
 
 
-def display_project_output(proj_path: Path) -> None:
+def display_project_output(proj_name: str) -> None:
     """Displays files in PROJ_PATH/outputs if they are supported.
 
     If there is a directory, it displays all supported files in the directory"""
     video_formats = ['.mov']
     image_formats = ['.png']
+
+    proj_path = helpers.get_proj_path(proj_name)
+    if not proj_path:
+        click.echo("error, project not found")
+        exit(1)
 
     output_path = proj_path / 'outputs'
     display_files = helpers.get_subfiles(output_path)
@@ -20,10 +25,13 @@ def display_project_output(proj_path: Path) -> None:
 
     for file in display_files:
         if file.suffix in video_formats:
+            click.echo(f'opening video: {file.name} from project: {proj_name}')
             display_video(file)
         elif file.suffix in image_formats:
+            click.echo(f'opening image: {file.name} from project: {proj_name}')
             display_image(file)
         elif file.suffix == '.usd':
+            click.echo(f'opening usd file: {file.name} from project: {proj_name}')
             display_usd(file)
         else:
             click.echo(f"error, file format '{file.suffix}' is not supported")

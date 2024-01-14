@@ -1,9 +1,12 @@
+import shutil
+from pathlib import Path
 from typing import Optional
 
 import click
 
-from ctrl.database import query as query
-from ctrl.utils import helpers as helpers
+import ctrl.database.query as query
+import ctrl.utils.helpers as helpers
+import ctrl.utils.constants as constants
 
 
 def create_tags(cursor, tags: list[str]) -> list[int]:
@@ -11,16 +14,16 @@ def create_tags(cursor, tags: list[str]) -> list[int]:
     import spacy
     nlp = spacy.load("en_core_web_lg")
 
-    tag_list = query.get_all_records(cursor, 'Tags')
+    res = query.get_all_records(cursor, ['Name'], 'Tags')
+    tag_list = [item[0] for item in res]
     tag_IDs = []
 
     for tag in tags:
-        id = _tag_exists(tag, tag_list)
-        if id:
+        if tag in tag_list:
             # tag already exists
-            tag_IDs.append(id)
+            tag_IDs.append(query.get_tag_id(cursor, tag))
             continue
-
+        click.clear()
         # tag is new
         similarities = _find_similar_tags(nlp, tag, tag_list)
         data = {'Name': tag}
@@ -39,30 +42,44 @@ def create_tags(cursor, tags: list[str]) -> list[int]:
             elif click.confirm(f"use similar tag instead?"):
                 index = click.prompt(f"tag number", type=click.IntRange(0, len(top_sims) - 1), show_choices=True)
                 tag_name, _ = top_sims[index]
-                tag_id = query.get_record(cursor, 'TagID', 'Tags', 'Name', tag_name)
+                tag_id = query.get_tag_id(cursor, tag_name)
                 tag_IDs.append(tag_id)
 
     return tag_IDs
 
 
-def _tag_exists(tag: str, tag_list: list[tuple[int, str]]) -> Optional[int]:
-    for id, name in tag_list:
-        if name == tag:
-            return id
-    return None
+def new_tool_dirs(proj_path: Path, tool: str) -> None:
+    if not proj_path.exists():
+        click.echo(f"error, proj path: {proj_path} does not exist")
+        exit(1)
+    if tool not in constants.TOOLS:
+        click.echo(f"error, tool {tool} not in constants.TOOLS")
+        exit(1)
+
+    (proj_path / tool).mkdir()
+    (proj_path / tool / 'projectFiles').mkdir()
+    (proj_path / tool / 'exports').mkdir()
+
+    # add workspace
+    if tool == 'maya':
+        # add workspace
+        workspace_path = proj_path / 'workspace.mel'
+        template_path = Path(__file__).parents[2] / 'templates' / 'workspace.mel'
+        shutil.copy(template_path, workspace_path)
+        click.echo(f"creating maya workspace at: {workspace_path}")
 
 
 def _has_vector(nlp, word: str):
     return nlp(word).has_vector
 
 
-def _find_similar_tags(nlp, tag: str, tag_list: list[tuple[int, str]]) -> Optional[list[tuple[str, float]]]:
+def _find_similar_tags(nlp, tag: str, tag_list: list[str]) -> Optional[list[tuple[str, float]]]:
 
     standardized_tag = helpers.standardize_word(tag)
     token1 = nlp(standardized_tag)
 
     similarities = []
-    for _, t in tag_list:
+    for t in tag_list:
         standardized_t = helpers.standardize_word(t)
         token2 = nlp(standardized_t)
 
@@ -73,3 +90,4 @@ def _find_similar_tags(nlp, tag: str, tag_list: list[tuple[int, str]]) -> Option
     # Sort the list by similarity score in descending order
     similarities.sort(key=lambda x: x[1], reverse=True)
     return similarities
+

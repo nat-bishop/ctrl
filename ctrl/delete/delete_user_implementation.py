@@ -3,7 +3,7 @@ import click
 
 
 def delete_user(cursor, name):
-    id = query.get_record(cursor,'UserID', 'Users', 'Name', name)
+    id = query.get_user_id(cursor, name)
     if not id:
         click.echo(f"user: {name} not found")
         exit(1)

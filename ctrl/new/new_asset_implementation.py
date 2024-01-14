@@ -6,7 +6,7 @@ import click
 import ctrl.database.query as query
 import ctrl.utils.helpers as helpers
 import ctrl.config as config
-import ctrl.new.tag_utils as tag_utils
+import ctrl.new.new_utils as tag_utils
 
 
 def new_asset(cursor,
@@ -19,7 +19,7 @@ def new_asset(cursor,
               description: str,
               thumbnail_path: Path,
               tags: Optional[list[str, ...]],
-              creators: Optional[list[str, ...]] ,
+              creators: Optional[list[str, ...]],
               date_created: date,
               parent_name: str,
               original_name: str) -> None:
@@ -67,7 +67,7 @@ def new_asset(cursor,
     # creating asset_variations record
     if original_name:
         variation_desc = click.prompt(f"variation description for {name} that is a variation of {original_name}")
-        original_id = query.get_record(cursor, 'AssetID', 'Assets', 'Title', original_name)
+        original_id = query.get_asset_id(cursor, original_name)
         data = {'OriginalAssetID': original_id,
                 'VariationAssetID': asset_id,
                 'VariationDescription': variation_desc}
@@ -75,14 +75,14 @@ def new_asset(cursor,
 
     # creating Asset_Parts
     if parent_name:
-        parent_id = query.get_record(cursor, 'AssetID', 'Assets', 'Title', parent_name)
+        parent_id = query.get_asset_id(cursor, parent_name)
         data = {'ParentAssetID': parent_id,
                 'PartAssetID': asset_id}
         query.insert_record(cursor, 'Asset_Parts', data)
 
     # creating asset_users
     for user in creators:
-        user_id = query.get_record(cursor, 'UserID', 'Users', 'Name', user)
+        user_id = query.get_user_id(cursor, user)
         if not user_id:
             click.echo(f'error, user {user} not found in database')
             raise ValueError

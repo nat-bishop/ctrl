@@ -1,14 +1,16 @@
 import shutil
 import click
+import ctrl.utils.helpers as helpers
 import ctrl.database.query as query
 
 
 def delete_project(cursor, name):
-    proj_id = query.get_record(cursor,'ProjectID', 'Projects', 'Title', name)
+    proj_id = query.get_project_id(cursor, name)
     if not proj_id:
-        click.echo(f"project: {name} not found")
-        exit(1)
+        raise ValueError(f"project: {name} not found")
+
     path = query.get_record(cursor,'PayloadPath', 'Projects', 'ProjectID', proj_id)
+    helpers.print_project(name)
     click.confirm(click.style(f'WARNING: this will destroy all files in project folder:{path} Proceed?', fg='red'), abort=True)
 
     query.delete_record(cursor, 'Asset_Projects', 'ProjectID', proj_id)

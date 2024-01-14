@@ -9,33 +9,123 @@ import ctrl.database.utils as utils
 import ctrl.database.query as query
 
 
-def print_project(proj_path: Path) -> None:
+def print_asset(name: str) -> None:
+    utils.perform_db_op(_print_asset_db, name)
+
+
+def _print_asset_db(cursor, name):
+    asset_id = query.get_asset_id(cursor, name)
+    if not asset_id:
+        click.echo(f'error, asset: {name} not found')
+
+    res = query.get_all_records(cursor,
+                                ['ThumbnailPath', 'ViewingPath', 'Type', 'Description', 'Mediator', 'DateCreated', 'Rights'],
+                                'Assets',
+                                'AssetID',
+                                asset_id)
+
+    thumbnail_path, view_path, asset_type, desc, creation_software, date_created, rights = res[0]
+    user_ids = query.get_all_records(cursor, ['UserID'], 'Asset_Users', 'AssetID', asset_id)
+    users = [query.get_record(cursor, 'Name', 'Users', 'UserID', item[0]) for item in user_ids]
+    users_str = ", ".join(users)
+
+    tag_ids = query.get_all_records(cursor, ['TagID'], 'Asset_Tags', 'AssetID', asset_id)
+    tags = [query.get_record(cursor, 'Name', 'Tags', 'TagID', item[0]) for item in tag_ids]
+    tags_str = ", ".join(tags)
+
+    project_ids = query.get_all_records(cursor, ['ProjectID'], 'Asset_Projects', 'AssetID', asset_id)
+    projects = [query.get_record(cursor, 'Title', 'Project', 'ProjectID', item[0]) for item in project_ids]
+    projects_str = ", ".join(projects)
+
+    child_asset_ids = query.get_all_records(cursor, ['PartAssetID'], 'Asset_Parts', 'ParentAssetID', asset_id)
+    child_assets = [query.get_record(cursor, 'Title', 'Assets', 'AssetID', item[0]) for item in child_asset_ids]
+    child_assets_str = ", ".join(child_assets)
+
+    parent_asset_ids = query.get_all_records(cursor, ['ParentAssetID'], 'Asset_Parts', 'PartAssetID', asset_id)
+    parent_assets = [query.get_record(cursor, 'Title', 'Assets', 'AssetID', item[0]) for item in parent_asset_ids]
+    parent_assets_str = ", ".join(parent_assets)
+
+    variations_ids = query.get_all_records(cursor, ['VariationAssetID'], 'Asset_Variations', 'OriginalAssetID', asset_id)
+    variations = [query.get_record(cursor, 'Title', 'Assets', 'AssetID', item[0]) for item in variations_ids]
+    variations_str = ", ".join(variations)
+
+    variation_parent_id = query.get_record(cursor, 'OriginalAssetID', 'Asset_Variations', 'VariationAssetID', asset_id)
+
+    click.echo(f"name: " + click.style(name, bold=True))
+    click.echo(f"file type: {asset_type}")
+    click.echo(f"creators: {users_str}")
+    click.echo(f"description: {desc}")
+    click.echo(f"date created: {date_created}")
+    click.echo(f"tags: {tags_str}")
+    click.echo(f"creation software: {creation_software}")
+    click.echo(f"usage rights: {rights}")
+    click.echo(f"main view path: {view_path}")
+    if thumbnail_path:
+        click.echo(f"thumbnail view path: {thumbnail_path}")
+    if projects:
+        click.echo(f"projects using assets: {projects_str}")
+    if parent_assets:
+        click.echo(f"parent assets: {parent_assets_str}")
+    if child_assets:
+        click.echo(f"child assets: {child_assets_str}")
+    if variation_parent_id:
+        variation_parent = query.get_record(cursor, 'Title', 'Assets', 'AssetID', variation_parent_id)
+        variation_desc = query.get_record(cursor, 'VariationDescription', 'Asset_Variations', 'VariationAssetID', variation_parent_id)
+        click.echo(f"original asset: {variation_parent}")
+        click.echo(f"variation description: {variation_desc}")
+    if variations:
+        click.echo(f"other variation assets: {variations_str}")
+
+
+def print_project(name: str) -> None:
     """prints info about project"""
-    query = ("SELECT u.Name, p.Title, p.Description, p.DateCreated "
-             "FROM Users u "
-             "JOIN Project_Users pu ON u.UserID = pu.UserID "
-             "JOIN Projects p ON pu.ProjectID = p.ProjectID "
-             "WHERE p.PayloadPath = %s;")
-    res = db.execute_query(query, (str(proj_path),))
-    users = ", ".join([item[0] for item in res])
-    title = res[0][1]
-    desc = res[0][2]
-    date_created = res[0][3]
-    tool_names = ", ".join([x.name for x in get_tools(proj_path)])
-    click.echo(f"title: {title}")
-    click.echo(f"path: {proj_path}")
-    click.echo(f"tools: {tool_names}")
-    click.echo(f"creators: {users}")
-    click.echo(f"created: {date_created}")
-    click.echo(f"desc: {desc}")
+    utils.perform_db_op(_print_project_db, name)
+
+
+def _print_project_db(cursor, name: str):
+    path = query.get_record(cursor, 'PayloadPath', 'Projects', 'Title', name)
+    if not path:
+        click.echo(f"error, project: {name}, not found")
+        exit(1)
+    id = query.get_project_id(cursor, name)
+    date_created = query.get_record(cursor, 'DateCreated', 'Projects', 'ProjectID', id)
+
+    click.echo(f'name: '+click.style(name, bold=True))
+    click.echo(f'path: {path}')
+    click.echo(f'date created: {date_created}')
+
+    res = query.get_all_records(cursor,['UserID'], 'Project_Users', 'ProjectID', id)
+    user_ids = [item[0] for item in res]
+    users = []
+    for user_id in user_ids:
+        users.append(query.get_record(cursor, 'Name', 'Users', 'UserID', user_id))
+
+    user_str = ', '.join(users)
+    click.echo(f'creators: {user_str}')
+
+    res = query.get_all_records(cursor, ['TagID'], 'Project_Tags', 'ProjectID', id)
+    tag_ids = [item[0] for item in res]
+    tags = []
+    for tag_id in tag_ids:
+        tags.append(query.get_record(cursor, 'Name', 'Tags', 'TagID', tag_id))
+
+    tag_str = ', '.join(tags)
+    click.echo(f'tags: {tag_str}')
+
+    desc = query.get_record(cursor, 'Description', 'Projects', 'ProjectID', id)
+    click.echo(f'description: {desc}')
 
 
 def get_proj_path(name: str) -> Path | None:
-    return utils.perform_db_op(query.get_record, 'PayloadPath', 'Projects', 'Title', name)
+    path = utils.perform_db_op(query.get_record, 'PayloadPath', 'Projects', 'Title', name)
+    if path:
+        return Path(path)
+    else:
+        return None
 
 
-def get_tools(proj_path: Path) -> list[Path]:
-    return [path for path in get_subdirs(proj_path) if path.name in constants.TOOLS]
+def get_tools(proj_path: Path) -> list[str]:
+    return [path.name for path in get_subdirs(proj_path) if path.name in constants.TOOLS]
 
 
 def get_subdirs(path: Path) -> list[Path]:
@@ -82,13 +172,13 @@ def find_similarity(sentence: str, list_of_sentences: list[str]) -> list[tuple[s
     return sorted(similarities, key=lambda x: x[1], reverse=True)
 
 
-def extract_filename(name: str) -> tuple[str, str, str, datetime, str]:
+def extract_filename(file_name: str) -> tuple[str, str, str, datetime, str]:
     """Extracts Information From Filename
 
-    :param name: A string the contains the name of the file in form projectName_fileName_type_YYMMDD_HHMM.ext
+    :param file_name: A string the contains the name of the file in form projectName_fileName_type_YYMMDD_HHMM.ext
 
     :return: projectName, fileName, fileType, time, extension"""
-    file_info, extension = name.split('.')
+    file_info, extension = file_name.split('.')
     project_name, file_name, file_type, yymmdd, hhmm = file_info.split('_')
     time = datetime(int('20' + yymmdd[0:2]), int(yymmdd[2:4]), int(yymmdd[4:6]), int(hhmm[0:2]), int(hhmm[2:4]))
     return camel_to_title(project_name), file_name, file_type, time, extension
