@@ -1,0 +1,210 @@
+global proc importImagesToHypershade() {
+    // Get the source images directory of the current project
+    string $sourceImagesDirRelative = `workspace -q -fre "sourceImages"`;
+    string $sourceImagesDirRoot = `workspace -q -rd`;
+    string $sourceImagesDir = $sourceImagesDirRoot + $sourceImagesDirRelative;
+
+    // Open a file dialog to select a directory, starting at the source images directory
+    string $selectedDir[] = `fileDialog2 -fm 3 -dir $sourceImagesDir -cap "Select Directory"`;
+
+    // Check if a directory was selected
+    if (size($selectedDir) == 1) {
+
+        // List all image files in the selected directory
+        string $imageFiles[] = `getFileList -folder $selectedDir[0]`;
+        
+        // Extract the dir name without the path to use as the node name
+        string $buffer[];
+        tokenize($selectedDir[0], "/", $buffer);
+        string $dirName = $buffer[size($buffer)-1];
+        
+        // Create VrayMtl
+        // Step 1: Create a VRayMtl
+        string $vrayMtlNode = `shadingNode -asShader VRayMtl`;
+        
+        // Step 2: Create a shading group
+        string $SgName = $dirName + "_SG";
+        string $shadingGroup = `sets -renderable true -noSurfaceShader true -empty -name $SgName`;
+        
+        // Step 3: Assign VRayMtl to the shading group
+        connectAttr -f ($vrayMtlNode + ".outColor") ($shadingGroup + ".surfaceShader");
+        
+        // Step 4: Rename the node
+        rename $vrayMtlNode ($dirName + "_mtl");
+        string $vrayMtlNode = ($dirName + "_mtl");
+        
+        // Step 5 Set vraymtl reflection color to white, bump map type to normal, use roughness on
+        string $attrName = ($vrayMtlNode + ".reflectionColor");
+        setAttr $attrName 1 1 1;
+        
+        // Iterate through all found image files
+        for ($file in $imageFiles) {
+            // Extract the file name without the path
+            string $buffer[];
+            tokenize($file, "/", $buffer);
+            string $fileName = $buffer[size($buffer)-1];
+            
+            // If the file is color/albedo
+            if (gmatch(tolower($fileName), "*albedo*") || gmatch(tolower($fileName), "*color*") || gmatch(tolower($fileName), "*diffuse*")) {    
+                // Create a file node
+                string $fileNode = `shadingNode -asTexture -isColorManaged file`;
+                
+                // rename the file node
+                rename $fileNode ($dirName + "_albedo_file");
+                string $fileNode = ($dirName + "_albedo_file");
+                
+                // Create a remap node
+                string $remapNode = `shadingNode -asUtility remapHsv`;
+                rename $remapNode ($dirName + "_albedo_remap");
+                string $remapNode = ($dirName + "_albedo_remap");
+                
+                //connect to vraymtl
+                connectAttr -force ($fileNode + ".outColor") ($remapNode + ".color");
+                connectAttr -f ($remapNode + ".outColor") ($vrayMtlNode + ".color");
+               
+    
+                // Set the file texture attribute
+                setAttr -type "string" ($fileNode + ".fileTextureName") ($selectedDir[0] + "/" + $file);
+                
+                // create and connect place2dtexturenode
+                create2dPlaceTexture(($dirName + "_albedo_place2d"), $fileNode);
+            }
+            // roughness
+            else if (gmatch(tolower($fileName), "*rough*")) {    
+                // Create a file node
+                string $fileNode = `shadingNode -asTexture -isColorManaged file`;
+                
+                // rename the file node
+                rename $fileNode ($dirName + "_roughness_file");
+                string $fileNode = ($dirName + "_roughness_file");
+                
+                //create a luminance node
+                string $luminanceNode = `shadingNode -asUtility luminance`;
+                rename $luminanceNode ($dirName +"_roughness_luminance");
+                string $luminanceNode = ($dirName +"_roughness_luminance");
+                
+                // Create a remap node
+                string $remapNode = `shadingNode -asUtility remapValue`;
+                rename $remapNode ($dirName +"_roughness_remap");
+                string $remapNode = ($dirName +"_roughness_remap");
+                
+                //connect to vraymtl
+                connectAttr -force ($fileNode + ".outColor") ($luminanceNode + ".value");
+                connectAttr -f ($luminanceNode + ".outValue") ($remapNode + ".inputValue");
+                connectAttr -f ($remapNode + ".outValue") ($vrayMtlNode + ".reflectionGlossiness");
+                
+                //set use roughness
+                setAttr ($vrayMtlNode + ".useRoughness") 1;
+               
+    
+                // Set the file texture attribute
+                setAttr -type "string" ($fileNode + ".fileTextureName") ($selectedDir[0] + "/" + $file);
+                
+                // create and connect place2dtexturenode
+                create2dPlaceTexture(($dirName + "_roughness_place2d"), $fileNode);
+            }
+                        // roughness
+
+            else if (gmatch(tolower($fileName), "*norm*")) {    
+                // Create a file node
+                string $fileNode = `shadingNode -asTexture -isColorManaged file`;
+                
+                // rename the file node
+                rename $fileNode ($dirName + "_normal_file");
+                string $fileNode = ($dirName + "_normal_file");
+                
+                // Create a remap node
+                string $remapNode = `shadingNode -asUtility remapHsv`;
+                rename $remapNode ($dirName +"_normal_remap");
+                string $remapNode = ($dirName +"_normal_remap");
+                
+                //connect to vraymtl
+                connectAttr -force ($fileNode + ".outColor") ($remapNode + ".color");
+                connectAttr -f ($remapNode + ".outColor") ($vrayMtlNode + ".bumpMap");
+                
+                //set bump map attribute
+                setAttr ($vrayMtlNode + ".bumpMapType") 1;
+               
+    
+                // Set the file texture attribute
+                setAttr -type "string" ($fileNode + ".fileTextureName") ($selectedDir[0] + "/" + $file);
+                
+                // create and connect place2dtexturenode
+                create2dPlaceTexture(($dirName + "_normal_place2d"), $fileNode);
+            }
+            //displacement, only for exr
+            else if (gmatch(tolower($fileName), "*disp*") && gmatch(tolower($fileName), "*.exr*")) {    
+                // Create a file node
+                string $fileNode = `shadingNode -asTexture -isColorManaged file`;
+                
+                // rename the file node
+                rename $fileNode ($dirName + "_displacement_file");
+                string $fileNode = ($dirName + "_displacement_file");
+                
+                //create a luminance node
+                string $luminanceNode = `shadingNode -asUtility luminance`;
+                rename $luminanceNode ($dirName +"_displacement_luminance");
+                string $luminanceNode = ($dirName +"_displacement_luminance");
+                
+                // Create a remap node
+                string $remapNode = `shadingNode -asUtility remapValue`;
+                rename $remapNode ($dirName +"_displacement_remap");
+                string $remapNode = ($dirName +"_displacement_remap");
+                
+                // Create a displacementSahder node
+                string $dispShaderNode = `shadingNode -asShader displacementShader`;
+                rename $dispShaderNode ($dirName +"_displacementShader");
+                string $dispShaderNode = ($dirName +"_displacementShader");
+                
+                //connect to vraymtl
+                connectAttr -force ($fileNode + ".outColor") ($luminanceNode + ".value");
+                connectAttr -f ($luminanceNode + ".outValue") ($remapNode + ".inputValue");
+                connectAttr -f ($remapNode + ".outValue") ($dispShaderNode + ".displacement");
+                connectAttr -f ($dispShaderNode + ".displacement") ($shadingGroup + ".displacementShader");
+
+    
+                // Set the file texture attribute
+                setAttr -type "string" ($fileNode + ".fileTextureName") ($selectedDir[0] + "/" + $file);
+                
+                // create and connect place2dtexturenode
+                create2dPlaceTexture(($dirName + "_glossiness_place2d"), $fileNode);
+           }
+        }
+    }
+    else {
+        print "No directory selected.\n";
+    }
+}
+
+global proc create2dPlaceTexture(string $place2dName, string $fileNodeName){
+    // Create a place2dTexture node
+    string $place2dNode = `shadingNode -asUtility place2dTexture`;
+
+    // Connect place2dTexture attributes to the file node
+    connectAttr -f ($place2dNode + ".coverage") ($fileNodeName + ".coverage");
+    connectAttr -f ($place2dNode + ".translateFrame") ($fileNodeName + ".translateFrame");
+    connectAttr -f ($place2dNode + ".rotateFrame") ($fileNodeName + ".rotateFrame");
+    connectAttr -f ($place2dNode + ".mirrorU") ($fileNodeName + ".mirrorU");
+    connectAttr -f ($place2dNode + ".mirrorV") ($fileNodeName + ".mirrorV");
+    connectAttr -f ($place2dNode + ".stagger") ($fileNodeName + ".stagger");
+    connectAttr -f ($place2dNode + ".wrapU") ($fileNodeName + ".wrapU");
+    connectAttr -f ($place2dNode + ".wrapV") ($fileNodeName + ".wrapV");
+    connectAttr -f ($place2dNode + ".repeatUV") ($fileNodeName + ".repeatUV");
+    connectAttr -f ($place2dNode + ".offset") ($fileNodeName + ".offset");
+    connectAttr -f ($place2dNode + ".rotateUV") ($fileNodeName + ".rotateUV");
+    connectAttr -f ($place2dNode + ".noiseUV") ($fileNodeName + ".noiseUV");
+    connectAttr -f ($place2dNode + ".vertexUvOne") ($fileNodeName + ".vertexUvOne");
+    connectAttr -f ($place2dNode + ".vertexUvTwo") ($fileNodeName + ".vertexUvTwo");
+    connectAttr -f ($place2dNode + ".vertexUvThree") ($fileNodeName + ".vertexUvThree");
+    connectAttr -f ($place2dNode + ".vertexCameraOne") ($fileNodeName + ".vertexCameraOne");
+    connectAttr ($place2dNode + ".outUV") ($fileNodeName + ".uv");
+    connectAttr ($place2dNode + ".outUvFilterSize") ($fileNodeName + ".uvFilterSize");
+    
+    rename $place2dNode $place2dName;
+}
+
+
+// Run the procedure
+importImagesToHypershade();
+
+

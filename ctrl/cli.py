@@ -20,13 +20,15 @@ def backup():
 
 @cli.command()
 @click.argument('sync_direction', type=click.Choice(['remote_to_source', 'source_to_remote']))
-def sync(sync_direction):
+@click.option('--delete/--no-delete', default=False,
+              help='should we delete files that are in remote but not in source? This is a destructive action.')
+def sync(sync_direction, delete):
     """Sync directory to SOURCE at config.ART_ROOT_PATH and config.ASSET_ROOT_PATH
     or sync director to REMOTE at config.REMOTE_ART_ROOT_PATH and config.REMOTE_ASSET_ROOT_PATH
 
     source files will not be changed, dest files will be deleted if not in source, updated if older than source"""
     from ctrl.sync.sync_implementation import sync
-    sync(sync_direction)
+    sync(sync_direction, delete)
 
 
 @cli.group()
@@ -46,7 +48,7 @@ def search():
               help='only projects after this date')
 @click.option('--to-date', '-to', type=click.DateTime(formats=["%Y-%m-%d"]),
               help='only projects before this date')
-@click.option('--gui/--no-gui', default=True,
+@click.option('--gui/--no-gui', default=False,
               help='display project with gui')
 def search_project(project_name, creators, tags, from_date, to_date, gui):
     """Search for PROJECT_NAME, or find similar."""
@@ -73,7 +75,7 @@ def search_project(project_name, creators, tags, from_date, to_date, gui):
               help='only assets before this date')
 @click.option('--projects', '-p', multiple=True, shell_complete=autocomplete.projects,
               help='filter by assets in use by project')
-@click.option('--gui/--no-gui', default=True,
+@click.option('--gui/--no-gui', default=False,
               help='display project with gui')
 def search_asset(asset_name, creators, tags, asset_type, rights, software, from_date, to_date, projects, gui):
     from ctrl.search.search_asset_implementation import search_asset
@@ -188,10 +190,11 @@ def new_asset(target_path, name, type, viewing_path, mediator, rights, descripti
 
 @cli.command()
 @click.argument('project_name', shell_complete=autocomplete.projects, required=True, type=str)
-@click.argument('tool', shell_complete=autocomplete.tools, required=True)
-@click.argument('file', shell_complete=autocomplete.project_files, required=True)
+@click.argument('tool', shell_complete=autocomplete.tools, required=False)
+@click.argument('file', shell_complete=autocomplete.project_files, required=False)
 def open(project_name, tool, file):
-    """Opens FILE for TOOL in PROJECT_NAME"""
+    """Opens FILE for TOOL in PROJECT_NAME
+    if no TOOL and FILE given, opens folder instead"""
     from ctrl.open.open_implementation import open
     open(project_name, tool, file)
 

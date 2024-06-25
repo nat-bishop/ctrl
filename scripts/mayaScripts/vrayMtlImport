@@ -1,0 +1,39 @@
+global proc importImagesToHypershade() {
+    // Get the source images directory of the current project
+    string $sourceImagesDir = `workspace -q -fre "sourceImages"`;
+
+    // Open a file dialog to select a directory, starting at the source images directory
+    string $selectedDir[] = `fileDialog2 -fm 3 -dir $sourceImagesDir -cap "Select Directory"`;
+
+    // Check if a directory was selected
+    if (size($selectedDir) > 0) {
+        // List all image files in the selected directory
+        string $imageFiles[] = `getFileList -folder $selectedDir[0] -filespec "*.jpg;*.png;*.tiff;*.exr"`;
+            // Extract the dir name without the path to use as the node name
+        string $buffer[];
+        tokenize($file, "/", $buffer);
+        string $dirName = $buffer[size($buffer)-1];
+        // Iterate through all found image files
+        for ($file in $imageFiles) {
+            // Extract the file name without the path to use as the node name
+            string $buffer[];
+            tokenize($file, "/", $buffer);
+            string $fileName = $buffer[size($buffer)-1];
+
+            // Create a file node
+            string $fileNode = `shadingNode -asTexture -isColorManaged file`;
+
+            // Set the file texture attribute
+            setAttr -type "string" ($fileNode + ".fileTextureName") ($selectedDir[0] + "/" + $file);
+
+            // Optionally, rename the node to match the file name for clarity
+            rename $fileNode ($fileName + "_fileNode");
+        }
+    }
+    else {
+        print "No directory selected.\n";
+    }
+}
+
+// Run the procedure
+importImagesToHypershade();

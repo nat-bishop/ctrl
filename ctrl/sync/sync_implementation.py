@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 
 
-def sync(sync_direction: str) -> None:
+def sync(sync_direction: str, delete: bool) -> None:
     if sync_direction == 'remote_to_source':
         click.echo(click.style('SYNCING TOWARDS SOURCE FROM REMOTE', fg='red'))
         project_source_path = Path(config.REMOTE_ART_ROOT_PATH)
@@ -21,16 +21,16 @@ def sync(sync_direction: str) -> None:
         raise ValueError('wrong sync direction arg')
 
     click.echo('project sync dry run:')
-    sync_directories(project_source_path, project_target_path, dry_run=True)
+    sync_directories(project_source_path, project_target_path, delete, dry_run=True)
     click.confirm('proceed with project sync?', abort=True)
     click.echo(f'syncing {project_source_path} to {project_target_path}')
-    sync_directories(project_source_path, project_target_path, dry_run=False)
+    sync_directories(project_source_path, project_target_path, delete, dry_run=False)
 
     click.echo('asset sync dry run:')
-    sync_directories(asset_source_path, asset_target_path, dry_run=True)
+    sync_directories(asset_source_path, asset_target_path, delete, dry_run=True)
     click.confirm('proceed with asset sync?', abort=True)
     click.echo(f'syncing {asset_source_path} to {asset_target_path}')
-    sync_directories(asset_source_path, asset_target_path, dry_run=False)
+    sync_directories(asset_source_path, asset_target_path, delete, dry_run=False)
 
 
 def list_files(directory: Path) -> list[Path]:
@@ -43,7 +43,7 @@ def file_last_modified_time(file_path: Path) -> float:
     return file_path.stat().st_mtime
 
 
-def sync_directories(source_dir: Path, target_dir: Path, dry_run: bool = True, size_diff_threshold: float = 0.5) -> None:
+def sync_directories(source_dir: Path, target_dir: Path, delete: bool, dry_run: bool = True, size_diff_threshold: float = 0.5) -> None:
     if not source_dir.exists():
         raise ValueError(f"error: source_dir: {source_dir}, does not exist")
     if not target_dir.exists():
@@ -76,6 +76,10 @@ def sync_directories(source_dir: Path, target_dir: Path, dry_run: bool = True, s
                 shutil.copy2(source_file, target_file)
 
     dest_files = list_files(target_dir)
+
+    #if not deleting files, end here
+    if not delete:
+        return
 
     for file in dest_files:
         relative_path = file.relative_to(target_dir)

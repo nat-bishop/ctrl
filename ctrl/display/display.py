@@ -11,7 +11,7 @@ def display_project_output(proj_name: str) -> None:
 
     If there is a directory, it displays all supported files in the directory"""
     video_formats = ['.mov']
-    image_formats = ['.png']
+    image_formats = ['.png', '.jpg']
 
     proj_path = helpers.get_proj_path(proj_name)
     if not proj_path:
@@ -44,6 +44,7 @@ def display_image(path: Path) -> None:
         print(f"Error: Could not read file '{path}'")
         return
     click.echo(f"displaying image '{path.name}'")
+    ims = cv2.resize(image, (1920, 1080))
     cv2.imshow("Image", image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
